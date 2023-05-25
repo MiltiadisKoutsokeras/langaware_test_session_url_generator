@@ -1,0 +1,140 @@
+# Workflow for main Git actions
+name: Main GitHub Actions
+
+# This workflow runs on push and pull-requests on specific branches
+on:
+  push:
+    # Cannot push straight to main by GitHub organization policy, only develop
+    # suffices.
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+# Jobs that will run (in parallel by default) within this workflow
+jobs:
+  check_code:
+    # This is the container runner host.
+    runs-on: ubuntu-latest
+    # Only run this job if the current repository is different than the template
+    # We do not want to overwrite the template itself...
+    if: ${{ github.repository	!= 'LangAwareTeam/langaware-nextjs-project-template' }}
+    # This is the container runner. Run on Debian 11, Node 16.X image
+    container:
+      image: node:16-bullseye
+    steps:
+      # Check GitHub Actions secrets
+      # - name: Check GitHub Actions secrets
+      #   shell: bash
+      #   run: |
+      #     if [[ \
+      #     "${{ secrets.TODO }}" = "" || \
+      #     "${{ secrets.TODO }}" = "" \
+      #     ]]
+      #     then
+      #       echo "Action secrets are not setup properly"
+      #       exit 1
+      #     fi
+      #     exit 0
+      # Dump the GitHub context for analysis
+      - name: Dump GitHub context
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      # Print Node version
+      - name: Node Version
+        shell: bash
+        run: node --version
+      # Setup GitHub SSH authentication
+      # - name: GitHub SSH Authentication
+      #   uses: webfactory/ssh-agent@v0.5.4
+      #   with:
+      #     ssh-private-key: |
+      #       ${{ secrets.TODO }}
+      #       ${{ secrets.TODO }}
+      # Checks-out your repository under $GITHUB_WORKSPACE
+      - name: Source Code checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # Make sure that GITHUB_WORKSPACE is a safe Git directory
+      # See issue: https://github.com/actions/checkout/issues/1169
+      - name: Make GITHUB_WORKSPACE a safe Git directory
+        run: git config --system --add safe.directory ${GITHUB_WORKSPACE}
+      # Check the code format
+      - name: Check the code format
+        shell: bash
+        run: bash ${GITHUB_WORKSPACE}/.github/scripts/check_code_format.sh
+      # Check the code linter errors and warnings
+      - name: Check the code linter errors and warnings
+        shell: bash
+        run: bash ${GITHUB_WORKSPACE}/.github/scripts/code_linter.sh
+      # Send notification message on errors
+      # TODO
+      # Print final message report
+      - name: Print Report
+        shell: bash
+        run: echo "Successfully checked source code of ${{ github.repository }}"
+
+  unit_tests:
+    needs: check_code
+    # This is the container runner host.
+    runs-on: ubuntu-latest
+    # This is the container runner. Run on Debian 11, Node 16.X image
+    container:
+      image: node:16-bullseye
+    steps:
+      # Check GitHub Actions secrets
+      # - name: Check GitHub Actions secrets
+      #   shell: bash
+      #   run: |
+      #     if [[ \
+      #     "${{ secrets.TODO }}" = "" || \
+      #     "${{ secrets.TODO }}" = "" \
+      #     ]]
+      #     then
+      #       echo "Action secrets are not setup properly"
+      #       exit 1
+      #     fi
+      #     exit 0
+      # Dump the GitHub context for analysis
+      - name: Dump GitHub context
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      # Print Node version
+      - name: Node Version
+        shell: bash
+        run: node --version
+      # Setup GitHub SSH authentication
+      # - name: GitHub SSH Authentication
+      #   uses: webfactory/ssh-agent@v0.5.4
+      #   with:
+      #     ssh-private-key: |
+      #       ${{ secrets.TODO }}
+      #       ${{ secrets.TODO }}
+      # Checks-out your repository under $GITHUB_WORKSPACE
+      - name: Source Code checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # Make sure that GITHUB_WORKSPACE is a safe Git directory
+      # See issue: https://github.com/actions/checkout/issues/1169
+      - name: Make GITHUB_WORKSPACE a safe Git directory
+        run: git config --system --add safe.directory ${GITHUB_WORKSPACE}
+      # Run the unit tests
+      - name: Run the unit tests
+        shell: bash
+        run: bash ${GITHUB_WORKSPACE}/.github/scripts/unit_tests.sh
+      # Send notification message on errors
+      # TODO
+      # Print final message report
+      - name: Print Report
+        shell: bash
+        run: echo "Successfully executed unit tests of ${{ github.repository }}"

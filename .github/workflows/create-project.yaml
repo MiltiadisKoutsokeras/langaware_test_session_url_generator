@@ -1,0 +1,132 @@
+# Workflow that creates the new project from the this template project
+name: Project Creation from Template
+
+# This workflow runs only on Git push event, a.k.a creation of new project from
+# template. The branch used is the default branch of this template project.
+on:
+  push:
+    branches:
+      - main
+
+# Environment variables applicable to job steps below
+env:
+  # Project template repository
+  PROJECT_TEMPLATE_REPO: "LangAwareTeam/langaware-nextjs-project-template"
+  # All projects are required to start with this prefix
+  PROJECT_REQUIRED_PREFIX: "langaware_"
+
+# Jobs that will run (in parallel by default) within this workflow
+jobs:
+  warning:
+    # This is the container runner host.
+    runs-on: ubuntu-latest
+    # Only run this job if the current repository is the same as the template in
+    # order to warn the user
+    if: ${{ github.repository	== 'LangAwareTeam/langaware-nextjs-project-template' }}
+    # This is the container runner. Run on Debian 11, Node 16.X image
+    container:
+      image: node:16-bullseye
+    steps:
+      # Dump the GitHub context for analysis
+      - name: Dump GitHub context
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      # Display warning message
+      - name: Warning Message
+        shell: bash
+        run: echo "Please use this template to generate a new project. See https://github.com/LangAwareTeam/langaware-nextjs-project-template/generate"
+
+  create_project:
+    # This is the container runner host.
+    runs-on: ubuntu-latest
+    # Only run this job if the current repository is different than the template
+    # We do not want to overwrite the template itself...
+    if: ${{ github.repository	!= 'LangAwareTeam/langaware-nextjs-project-template' }}
+    # This is the container runner. Run on Debian 11, Node 16.X image
+    container:
+      image: node:16-bullseye
+    steps:
+      # Check GitHub Actions secrets
+      # - name: Check GitHub Actions secrets
+      #   shell: bash
+      #   run: |
+      #     if [[ \
+      #     "${{ secrets.TODO }}" = "" || \
+      #     "${{ secrets.TODO }}" = "" \
+      #     ]]
+      #     then
+      #       echo "Action secrets are not setup properly"
+      #       exit 1
+      #     fi
+      #     exit 0
+      # Dump the GitHub context for analysis
+      - name: Dump GitHub context
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+      # Print Node version
+      - name: Node Version
+        shell: bash
+        run: node --version
+      # Add environment variables to GitHub action environment
+      - name: Prepare Script Environment
+        shell: bash
+        run: |
+          echo "REPO_NAME=$(echo ${{ github.repository }} | awk -F '/' '{print $2}')" >> ${GITHUB_ENV}
+          echo "REPO_DESCRIPTION=$(echo 'TODO Project Description')" >> ${GITHUB_ENV}
+          echo "REPO_AUTHOR=$(echo ${{ github.repository }} | awk -F '/' '{print $1}')" >> ${GITHUB_ENV}
+      # Print the environment variables
+      - name: Print Script Environment
+        shell: bash
+        run: env
+      # Setup GitHub SSH authentication
+      # - name: GitHub SSH Authentication
+      #   uses: webfactory/ssh-agent@v0.5.4
+      #   with:
+      #     ssh-private-key: |
+      #       ${{ secrets.TODO }}
+      #       ${{ secrets.TODO }}
+      # Checks-out your repository under $GITHUB_WORKSPACE
+      - name: Source Code checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      # Make sure that GITHUB_WORKSPACE is a safe Git directory
+      # See issue: https://github.com/actions/checkout/issues/1169
+      - name: Make GITHUB_WORKSPACE a safe Git directory
+        run: git config --system --add safe.directory ${GITHUB_WORKSPACE}
+      # List project files
+      - name: List project contents
+        shell: bash
+        run: ls -laR ${GITHUB_WORKSPACE}
+      # Rename the project template placeholders with project name
+      - name: Rename Project References
+        shell: bash
+        run: bash ${GITHUB_WORKSPACE}/.github/scripts/rename_project_references.sh
+      # Apply the code format
+      - name: Apply the code format
+        shell: bash
+        run: bash ${GITHUB_WORKSPACE}/.github/scripts/apply_code_format.sh
+      # List project files
+      - name: List changed project contents
+        shell: bash
+        run: |
+          ls -laR ${GITHUB_WORKSPACE}
+          git status
+          git --no-pager diff
+      # Commit changes by .github/scripts/rename_project_references.sh
+      - name: Commit code changes
+        if: ${{ !env.ACT }}
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Project initialized from template."
+          push_options: --force
+      # Print final message report
+      - name: Print Report
+        shell: bash
+        run: echo "Successfully created project ${{ github.repository }} from ${PROJECT_TEMPLATE_REPO}"

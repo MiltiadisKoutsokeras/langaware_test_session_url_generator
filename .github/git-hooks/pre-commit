@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+################################################################################
+# LANGaware (https://langaware.com/)
+# Authors:
+# Miltiadis Koutsokeras <miltos@langaware.com>
+################################################################################
+
+### Script setup
+_SELF_="$(basename "$(readlink -e "${BASH_SOURCE[0]}")" && echo X)" && \
+readonly _SELF_="${_SELF_%$'\nX'}"
+_SELFDIR_="$(dirname "$(readlink -e "${BASH_SOURCE[0]}")" && echo X)" && \
+readonly _SELFDIR_="${_SELFDIR_%$'\nX'}"
+
+### Includes
+# Nothing
+
+### Constants
+BRANCHNAME="$(git rev-parse --abbrev-ref HEAD)"
+readonly BRANCHNAME
+
+### Global variables
+# Nothing
+
+### Functions
+echo_red_bold() {
+  echo -e "\\e[1m\\e[31m${*}\\e[0m"
+}
+
+echo_green_bold() {
+  echo -e "\\e[1m\\e[32m${*}\\e[0m"
+}
+
+################################################################################
+# Main program
+
+# Get Git commit to diff against
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+    against=HEAD
+else
+    # Initial commit: diff against an empty tree object
+    against=$(git hash-object -t tree /dev/null)
+fi
+
+# Redirect output to stderr.
+exec 1>&2
+
+# Can't commit to specific branches directly
+case "${BRANCHNAME}" in
+    'main' | 'develop') {
+        echo_red_bold "Cannot commit directly to branches: main, develop!"
+        exit 1
+    } ;;
+
+    'HEAD') {
+        echo_red_bold "Cannot commit directly to unknown branch!"
+        exit 1
+    } ;;
+
+    *) {
+        echo_green_bold "Branch ${BRANCHNAME} commits allowed..."
+    } ;;
+esac
+
+# If there are whitespace errors, print the offending file names and fail.
+if ! git diff-index --check --cached "${against}" --
+then
+    echo_red_bold "Whitespace errors, found! Please check above."
+    exit 1
+fi
+
+# Check code formatting
+"${_SELFDIR_}/../../.github/scripts/check_code_format.sh" || \
+{
+    echo_red_bold "Files with bad formatting found! Please check above."
+    exit 1
+}
+
+# Code linter checks
+"${_SELFDIR_}/../../.github/scripts/code_linter.sh" || \
+{
+    echo_red_bold "Serious code errors and warnings found! Please check above."
+    exit 1
+}
+
+################################################################################
