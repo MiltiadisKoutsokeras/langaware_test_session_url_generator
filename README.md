@@ -2,7 +2,7 @@
 
 ## General
 
-TODO Project Description
+Web Application for generating Test session ephemeral URLs.
 
 ## Development instructions
 
