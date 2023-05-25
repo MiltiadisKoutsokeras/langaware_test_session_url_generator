@@ -7,8 +7,8 @@ const Home: NextPage = () => {
   return (
     <div className={styles.container}>
       <Head>
-        <title>__REPO_NAME__</title>
-        <meta name="description" content="__REPO_NAME__" />
+        <title>langaware_test_session_url_generator</title>
+        <meta name="description" content="langaware_test_session_url_generator" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -17,13 +17,13 @@ const Home: NextPage = () => {
           width={230} height={101} />
 
         <h1 className={styles.title}>
-          __REPO_NAME__
+          langaware_test_session_url_generator
         </h1>
 
-        <h2>__REPO_AUTHOR__</h2>
+        <h2>MiltiadisKoutsokeras</h2>
 
         <h2>
-          __REPO_DESCRIPTION__
+          TODO Project Description
         </h2>
       </main>
 

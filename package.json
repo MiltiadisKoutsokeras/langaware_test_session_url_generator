@@ -1,5 +1,5 @@
 {
-  "name": "__REPO_NAME__",
+  "name": "langaware_test_session_url_generator",
   "version": "0.0.1",
   "private": true,
   "scripts": {
