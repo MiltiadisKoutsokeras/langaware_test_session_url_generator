@@ -1,12 +1,14 @@
 {
   "name": "langaware_test_session_url_generator",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "start-docker": "docker compose up --build",
+    "stop-docker": "docker compose down --rmi all"
   },
   "dependencies": {
     "next": "12.3.1",
