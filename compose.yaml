@@ -1,0 +1,36 @@
+################################################################################
+# Docker containers
+#
+# Author: Miltiadis Koutsokeras <miltos@langaware.com>
+#
+# See README.md for detailed instructions on how to use this file.
+#
+################################################################################
+
+services:
+  ############################################################################
+  # Web Application for generating Test session ephemeral URLs
+  langaware_test_session_url_generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GIT_HASH: ${GIT_HASH:-NA}
+        GIT_BRANCH: ${GIT_BRANCH:-NA}
+    image: langaware_test_session_url_generator:local-testing
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      # Exposed in port HOST_PORT (default 3000) of localhost
+      - "127.0.0.1:${HOST_PORT:-3000}:${PORT:-3000}/tcp"
+    environment:
+      ####################################################################
+      # Application environment variables
+      NODE_ENV: ${NODE_ENV:-production}
+      NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
+      BROWSER: ${BROWSER:-none}
+      FAST_REFRESH: ${FAST_REFRESH:-true}
+      BACKEND_URL: ${BACKEND_URL:-https://langaware-platform-api-integration-internal-dev-4lfw7hjlma-uc.a.run.app}
+      API_KEY: ${API_KEY:-d49e1500ee3e42778c1e5efa6bd67672}
+      ##########################################################################
+##############################################################################
